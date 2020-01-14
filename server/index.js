@@ -55,44 +55,6 @@ app.post('/appointments/add', (req, res) => {
 });
 
 
-// app.get('/patients/:id', (req, res) => {
-//   const {id} = req.params;
-//   db.getData(id, (err, results) => {
-//     if (err) {
-//       console.log(err);
-//     } else {
-//       res.send(results);
-//     }
-//   });
-// });
-
-
-// app.post('/patients/add', (req, res) => {
-//   let {name, lastname} = req.body;
-//   db.addData(name, lastname, (err, results) => {
-//     if (err) {
-//       console.log(err);
-//     } else {
-//       console.log('POST successful! results: ', results);
-//       res.send(results);
-//     }
-//   });
-// });
-
-
-// app.delete('/patients/delete', (req, res) => {
-//   const {id} = req.body;
-//   db.deleteData(id, (err, results) => {
-//     if(err) {
-//       console.log(err);
-//       res.sendStatus(500);
-//     } else {
-//       res.status(200).json(results);
-//     }
-//   });
-// });
-
-
 app.listen(port, () => {
   console.log(`Server active! Listening on port ${port}.`)
 });
