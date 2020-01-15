@@ -1,48 +1,50 @@
+const Promise = require('bluebird');
 const mysql = require('mysql');
 const mysqlConfig = require('./config.js');
 
 const connection = mysql.createConnection(mysqlConfig);
+const db = Promise.promisifyAll(connection, { multiArgs: true });
 
-const getDoctors = function(callback) {
-  connection.query(`SELECT id, name, lastname from doctors`, function(err, results) {
-    callback(err, results);
-  });
-}
+db.connectAsync()
+  .then(() => console.log('Connected to the database'))
+  .error((err) => { console.log('Error connecting to database', err); });
 
-const getAppointmentsByDoctorByDay = function(id, date, callback) {
-  connection.query(`SELECT * from appointments WHERE doctor_id=${id} and DATE(date_time)=${date}`, function(err, results) {
-    callback(err, results);
-  });
-}
+module.exports = db;
 
-const deleteAppointment = function(id, callback) {
-  connection.query(`DELETE FROM appointments WHERE id=${id}`, function(err, results) {
-    callback(err, results);
-  });
-}
+const getDoctors = () => {
+  const queryString = 'SELECT id, name, lastname from doctors';
+  return db.queryAsync(queryString);
+};
 
-const addAppointment = function(date, time, doctor_id, patient_name, patient_lastname, kind, callback) {
-  let date_time = new Date(date + ' ' + time);
-  let minutes = date_time.getMinutes();
-  let seconds = date_time.getSeconds();
-  if (minutes % 15 !== 0 || seconds !==0) {
-    callback('invalid time selected for the appointment', []);
-    return;
-  }
-  connection.query(`SELECT COUNT(*) from appointments WHERE doctor_id=${doctor_id} and DATE(date_time)=${date} and TIME(date_time)=${time}`, function(err, results) {
-    if (results >= 3) {
-      callback('3 or more appointments already', []);
-      return;
-    }
-    connection.query(`INSERT INTO appointments (doctor_id, patient_name, patient_lastname, date_time, kind) VALUES (?, ?, ?, ?, ?)`, [doctor_id, patient_name, patient_lastname, date_time, kind], function(err, results) {
-          callback(err, results);
-        });
-  });
-}
+const getAppointmentsByDoctorByDay = (id, date) => {
+  const queryString = `SELECT * from appointments WHERE doctor_id=${id} and DATE(date_time)=${date}`;
+  const params = [id, date];
+  return db.queryAsync(queryString, params);
+};
+
+const deleteAppointment = (id) => {
+  const queryString = `DELETE FROM appointments WHERE id=${id}`;
+  const params = [id];
+  return db.queryAsync(queryString, params);
+};
+
+const checkAppointments = (date, time, doctor_id) => {
+  const queryString = `SELECT * from appointments WHERE doctor_id=${doctor_id} and DATE(date_time)='${date}' and TIME(date_time)='${time}'`;
+  const params = [date, time, doctor_id];
+  return db.queryAsync(queryString, params);
+};
+
+const addAppointment = (date, time, doctor_id, patient_name, patient_lastname, kind) => {
+  const date_time = new Date(date + ' ' + time);
+  const queryString = `INSERT INTO appointments (doctor_id, patient_name, patient_lastname, date_time, kind) VALUES (?, ?, ?, ?, ?)`;
+  const params = [doctor_id, patient_name, patient_lastname, date_time, kind];
+  return db.queryAsync(queryString, params);
+};
 
 module.exports = {
   getDoctors,
   getAppointmentsByDoctorByDay,
   deleteAppointment,
+  checkAppointments,
   addAppointment
 }
